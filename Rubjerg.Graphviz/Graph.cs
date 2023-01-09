@@ -462,10 +462,76 @@ public class Graph : CGraphThing
         MyRootGraph.Delete(merge);
     }
 
-    public bool IsCluster()
-    {
-        return GetName().StartsWith("cluster");
-    }
+        /// <summary>
+        /// Compute a layout for this graph.
+        /// NB: The method FreeLayout should always be called as soon as the layout information
+        /// of a graph is not needed anymore.
+        /// </summary>
+        public void ComputeLayout(string engine = LayoutEngines.Dot)
+        {
+            int layout_rc = GvLayout(GVC, _ptr, engine);
+            if (layout_rc != 0)
+                throw new ApplicationException($"Graphviz layout returned error code {layout_rc}");
+
+            // Calling gvRender this way sets attributes to the graph etc
+            // The engine specified here doesn't have to be the same as the above.
+            // We always want to use xdot here, independently of the layout algorithm,
+            // to ensure a consistent attribute layout.
+            int render_rc = GvRender(GVC, _ptr, "xdot", IntPtr.Zero);
+            if (render_rc != 0)
+                throw new ApplicationException($"Graphviz render returned error code {render_rc}");
+        }
+
+        /// <summary>
+        /// Clean up the layout information stored in this graph. This does not include the attributes set by GvRender.
+        /// This method should always be called as soon as the layout information of a graph is not needed anymore.
+        /// NB: this method must not be called after modifications to the graph have been made!
+        /// This could result an AccessViolationException.
+        /// </summary>
+        public void FreeLayout()
+        {
+            var free_rc = GvFreeLayout(GVC, _ptr);
+            if (free_rc != 0)
+                throw new ApplicationException($"Graphviz render returned error code {free_rc}");
+        }
+
+        /// <summary>
+        /// Should only be called after <see cref="ComputeLayout"/> has been called.
+        /// </summary>
+        public void ToSvgFile(string filename)
+        {
+            var render_rc = GvRenderFilename(GVC, _ptr, "svg", filename);
+            if (render_rc != 0)
+                throw new ApplicationException($"Graphviz render returned error code {render_rc}");
+        }
+
+        public RectangleF BoundingBox()
+        {
+            string bb_string = Rjagget(_ptr, "bb");
+            if (string.IsNullOrEmpty(bb_string))
+                return default;
+            // x and y are the topleft point of the bb
+            char sep = ',';
+            string[] bb = bb_string.Split(sep);
+            float x = float.Parse(bb[0], NumberStyles.Any, CultureInfo.InvariantCulture);
+            float y = float.Parse(bb[1], NumberStyles.Any, CultureInfo.InvariantCulture);
+            float w = float.Parse(bb[2], NumberStyles.Any, CultureInfo.InvariantCulture) - x;
+            float h = float.Parse(bb[3], NumberStyles.Any, CultureInfo.InvariantCulture) - y;
+            return new RectangleF(x, y, w, h);
+        }
+
+        public GraphvizLabel GetLabel()
+        {
+            IntPtr labelptr = GraphLabel(_ptr);
+            if (labelptr == IntPtr.Zero)
+                return null;
+            return new GraphvizLabel(labelptr, BoundingBoxCoords.Centered);
+        }
+
+        public bool IsCluster()
+        {
+            return GetName().StartsWith("cluster");
+        }
 
     /// <summary>
     /// Must be true for logical tails/heads to be used in drawing.
