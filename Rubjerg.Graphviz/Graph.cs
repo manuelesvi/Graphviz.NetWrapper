@@ -505,6 +505,8 @@ public class Graph : CGraphThing
                 throw new ApplicationException($"Graphviz render returned error code {render_rc}");
         }
 
+        public void ToPdfFile(string filename) => RenderToFile(filename, "pdf");
+
         public RectangleF BoundingBox()
         {
             string bb_string = Rjagget(_ptr, "bb");
