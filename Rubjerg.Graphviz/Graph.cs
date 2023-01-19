@@ -505,7 +505,15 @@ public class Graph : CGraphThing
                 throw new ApplicationException($"Graphviz render returned error code {render_rc}");
         }
 
+        /// <summary>
+        /// Should only be called after <see cref="ComputeLayout"/> has been called.
+        /// </summary>        
         public void ToPdfFile(string filename) => RenderToFile(filename, "pdf");
+
+        /// <summary>
+        /// Should only be called after <see cref="ComputeLayout"/> has been called.
+        /// </summary>
+        public void ToPsFile(string filename) => RenderToFile(filename, "ps");
 
         public RectangleF BoundingBox()
         {
