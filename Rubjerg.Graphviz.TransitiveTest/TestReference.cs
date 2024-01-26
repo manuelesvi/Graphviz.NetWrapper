@@ -1,15 +1,16 @@
-﻿using System.Linq;
+using System.Linq;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
-namespace Rubjerg.Graphviz.NugetTest;
-
-[TestFixture()]
-public class TestReference
+namespace Rubjerg.Graphviz.NugetTest
 {
-    [Test()]
-    public void TestReadDotFile()
+    [TestFixture()]
+    public class TestReference
     {
-        RootGraph root = RootGraph.FromDotString(@"
+        [Test()]
+        public void TestReadDotFile()
+        {
+            RootGraph root = RootGraph.FromDotString(@"
 digraph test {
     A;
     B;
@@ -19,11 +20,12 @@ digraph test {
     A -> B[name = edgename];
 }
 ");
-        var A = root.GetNode("A");
-        Assert.AreEqual(3, A.EdgesOut().Count());
+            var A = root.GetNode("A");
+            ClassicAssert.AreEqual(3, A.EdgesOut().Count());
 
-        var B = root.GetNode("B");
-        _ = root.GetOrAddEdge(A, B, "");
-        Assert.AreEqual(4, A.EdgesOut().Count());
+            var B = root.GetNode("B");
+            _ = root.GetOrAddEdge(A, B, "");
+            ClassicAssert.AreEqual(4, A.EdgesOut().Count());
+        }
     }
 }
